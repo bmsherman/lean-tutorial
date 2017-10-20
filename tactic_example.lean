@@ -279,7 +279,7 @@ meta def get_rlist : expr → tactic (list expr)
    xs' ← get_rlist xs,
    pure (x :: xs')
 | `(rlist.nil) := pure []
-| _ := tactic.fail "uh-oh"
+| _ := tactic.fail "Expression is not an rlist"
 
 meta def make_list : list expr → expr ff
 | [] := ``(list.nil)
@@ -301,20 +301,18 @@ meta def on_sequent_goal {A} (f : expr → expr → tactic A)
   tgt' ← instantiate_mvars tgt,
   match tgt' with
   | `(%%Γ ⊢ %%P) := f Γ P
-  | _ := tactic.fail "not a logical entailment"
+  | _ := tactic.fail "goal is not a logical entailment"
   end
 
 meta def reify_goal : tactic unit :=
-  on_sequent_goal $ λ xs P, do
-    ty ← infer_type P >>= whnf,
-    xs' ← get_rlist xs,
-    (xs', P', ctxt) ← sequent.reify xs' P,
+  on_sequent_goal $ λ Γ P, do
+    Γ' ← get_rlist Γ,
+    (Γ'', P', ctxt) ← sequent.reify Γ' P,
     let ctxt' := make_list ctxt,
-    let xs'' := make_rlist xs',
-    xs''' ← i_to_expr xs'',
+    Γ''' ← i_to_expr (make_rlist Γ''),
     P'' ← i_to_expr P',
     ctxtf ← i_to_expr ``(list.nth_def %%ctxt' false),
-    e ← i_to_expr ``(sequent.interp_impl %%xs''' %%P'' %%ctxtf),
+    e ← i_to_expr ``(sequent.interp_impl %%Γ''' %%P'' %%ctxtf),
     tactic.apply e
 
 meta def entails_tactic (e : parse texpr) : tactic unit := do
@@ -325,9 +323,9 @@ meta def entails_tactic (e : parse texpr) : tactic unit := do
     e' ← i_to_expr ``(%%e %%Γ %%A) >>= whnf,
     match e' with
     | `(some (plift.up %%x)) := tactic.apply x
-    | _ := tactic.fail "Didn't get some"
+    | _ := tactic.fail "Reflective tactic didn't return `some`"
     end
-  | _ := tactic.fail "not a formula entailment"
+  | _ := tactic.fail "Goal is not a formula entailment"
   end
 
 meta def intros := repeat (apply ``(sequent.intro _))
@@ -362,14 +360,14 @@ sequent.apply H; sequent.assumption
 end
 
 lemma example2 {P Q R : Prop} :
-  rlist.nil & P & Q ⊢ ((R ∧ P) ∨ (Q ∧ P))
+  rlist.nil & P & Q ⊢ (R ∧ P) ∨ (Q ∧ P)
 := begin
 sequent.right, sequent.split, sequent.assumption,
 sequent.assumption,
 end
 
 lemma example3 {P Q R : Prop} :
- rlist.nil & P & Q ⊢ ((R ∧ P) ∨ (Q ∧ P))
+ rlist.nil & P & Q ⊢ (R ∧ P) ∨ (Q ∧ P)
 := begin
 sequent.reify_goal, sequent.entails_tactic sequent.formula_entails_auto,
 end
