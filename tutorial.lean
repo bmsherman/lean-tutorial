@@ -7,6 +7,8 @@
    https://jldodds.github.io/coq-lean-cheatsheet/
 -/
 
+import .tactics
+
 /- I'm a big fan of using Unicode while writing Lean.
    It's similar to Clément's company-coq mode, 
    using LaTeX-like style, except one completes writing
@@ -91,6 +93,19 @@ def zip_with {A : Type u} {B : Type v} {C : Type w}
 #check @nat.rec
 #check @nat.cases_on
 
+lemma zip_with_assoc {A : Type u} (f : A → A → A)
+  (f_assoc : ∀ x y z, f x (f y z) = f (f x y) z)
+  {n : nat} (xs ys zs : vector A n)
+  : zip_with f xs (zip_with f ys zs) = zip_with f (zip_with f xs ys) zs
+:= begin
+induction n; cases xs; cases ys; cases zs,
+{ reflexivity },
+{ dsimp [zip_with], f_equal,
+  { rw f_assoc }, -- could also use `simp [f_assoc]`
+  { apply ih_1 }
+  }
+end
+
 end vector
 
 /-- The reflexive-transitive closure of a relation -/
@@ -164,7 +179,7 @@ def manual_cumulativity (A : Type u) : Type (u + 1) := lift_succ A
 lemma prop_is_sort_0 : Prop = Sort 0 := rfl
 lemma type_is_type_0 : Type = Type 0 := rfl
 lemma type_u_is_sort_succ_u : Type u = Sort (u + 1) := rfl
-lemma universe_algebra : Sort (max (u + 0) v) = Sort (max v u) := rfl
+lemma universe_algebra : Sort (max (u + 1) (v + 1)) = Sort (max v u + 1) := rfl
 
 #print plift
 #print ulift

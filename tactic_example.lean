@@ -3,7 +3,6 @@
    tactic that solves goals in intuitionistic propositional logic.
 -/
 
-reserve infixl ` ⇒ `:60
 reserve infixl ` ⊢ `:25
 reserve infixl ` & `:70
 
@@ -186,6 +185,9 @@ instance formula_decidable_eq {vTy : Type}
   [decidable_eq vTy] : decidable_eq (formula vTy)
   := by tactic.mk_dec_eq_instance
 
+/-- Formula entailment holds if the entailment would
+    be true in all possible contexts (variable assignments).
+-/
 def formula_entails {vTy : Type}
   (Γ : rlist (formula vTy)) (A : formula vTy)
   := ∀ ctxt, Γ.map (formula.interp ctxt) ⊢ A.interp ctxt
