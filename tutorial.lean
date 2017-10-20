@@ -147,6 +147,24 @@ lemma UIP (A : Sort u) (x y : A) (p q : x = y) : p = q := rfl
 #check @funext
 #print funext
 
-/- For an introduction to the tactic system, let's write a reified
-   tactic that solves goals in intuitionistic propositional logic.
--/
+/- Universes -/
+
+/- Whereas Coq has both universe cumulativity and (in recent versions,
+   with the appropriate flag) universe polymorphism,
+   Lean has universe polymorphism, but cumulativity must be done
+   manually. -/
+def no_cumulativity (A : Type u) : Type (u + 1) := A
+
+/- But we can do it manually, using inductive types -/
+inductive lift_succ (A : Type u) : Type (u + 1)
+  | mk : A → lift_succ
+
+def manual_cumulativity (A : Type u) : Type (u + 1) := lift_succ A
+
+lemma prop_is_sort_0 : Prop = Sort 0 := rfl
+lemma type_is_type_0 : Type = Type 0 := rfl
+lemma type_u_is_sort_succ_u : Type u = Sort (u + 1) := rfl
+lemma universe_algebra : Sort (max (u + 0) v) = Sort (max v u) := rfl
+
+#print plift
+#print ulift

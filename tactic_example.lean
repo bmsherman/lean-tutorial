@@ -1,6 +1,10 @@
 
+/- For an introduction to the tactic system, let's write a reflective
+   tactic that solves goals in intuitionistic propositional logic.
+-/
+
 reserve infixl ` ⇒ `:60
-reserve infixl ` ⊢ `:50
+reserve infixl ` ⊢ `:25
 reserve infixl ` & `:70
 
 universes u v
@@ -78,7 +82,7 @@ end
 
 def revert {Γ : rlist Prop} {P Q : Prop}
   (H : Γ ⊢ (P → Q))
-  : (Γ & P) ⊢ Q
+  : Γ & P ⊢ Q
 := begin
 dsimp [entails, conjunction],
 intros H', induction H', apply H; assumption
@@ -93,7 +97,7 @@ end
 def split {Γ : rlist Prop} {P Q : Prop}
   (HP : Γ ⊢ P)
   (HQ : Γ ⊢ Q)
-  : Γ ⊢ (P ∧ Q)
+  : Γ ⊢ P ∧ Q
 := begin
 dsimp [entails] at *,
 intros, split, apply HP, assumption,
@@ -102,7 +106,7 @@ end
 
 def left {Γ : rlist Prop} {P Q : Prop}
   (HP : Γ ⊢ P)
-  : Γ ⊢ (P ∨ Q)
+  : Γ ⊢ P ∨ Q
 := begin
 dsimp [entails] at *,
 intros, left, apply HP, assumption,
@@ -110,7 +114,7 @@ end
 
 def right {Γ : rlist Prop} {P Q : Prop}
   (HP : Γ ⊢ Q)
-  : Γ ⊢ (P ∨ Q)
+  : Γ ⊢ P ∨ Q
 := begin
 dsimp [entails] at *,
 intros, right, apply HP, assumption,
@@ -128,7 +132,7 @@ end
 def prove_conjunction_helper (Γ : rlist Prop)
   : rlist Prop → Prop
 | rlist.nil := true
-| (xs & x) := prove_conjunction_helper xs ∧ Γ ⊢ x
+| (xs & x) := prove_conjunction_helper xs ∧ (Γ ⊢ x)
 
 def prove_conjunction {Γ Δ : rlist Prop}
   (H : prove_conjunction_helper Γ Δ)
@@ -231,7 +235,6 @@ def formula_entails_auto {vTy : Type}
 
 meta def intern_var (xs : list expr) (e : expr) : list expr × ℕ
   := (if e ∈ xs then xs else xs ++ [e], xs.index_of e)
-
 
 meta def reify_helper
   : list expr → expr → tactic (expr ff × list expr)
